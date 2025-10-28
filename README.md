@@ -1,104 +1,91 @@
-# 🛍️ Product Inventory API
+Product Inventory API
 
-A simple Node.js and Express-based API for managing and retrieving product inventory data.  
-This project demonstrates basic API routing, environment variable configuration, and JSON response handling.
+Simple REST API built with Node.js and Express to serve a static list of products from `data/products.js`.
 
----
+## Features
+- **Express server** with JSON middleware
+- **Environment variables** via `dotenv`
+- **Products endpoint** returning predefined inventory
 
-## 🚀 Features
+## Tech Stack
+- **Runtime:** Node.js
+- **Framework:** Express
+- **Config:** dotenv
+- **Dev tooling:** nodemon (optional)
 
-- Fetch all available products  
-- Structured JSON responses  
-- Environment variable support using **dotenv**  
-- Organized project structure for scalability  
-- Built with **Express.js**
-
----
-
-## 🧱 Project Structure
-
+## Project Structure
 ```
-product-inventory-api/
-│
-├── data/
-│   └── products.js        # Mock product data
-│
-├── .env                   # Environment variables (e.g., PORT)
-├── server.js              # Main application entry point
-├── package.json
-└── README.md
+productInventory-main/
+├─ data/
+│  └─ products.js        # Static product list (exported array)
+├─ server.js             # Express app and routes
+├─ package.json          # Scripts and dependencies
+├─ package-lock.json
+└─ .gitignore
 ```
 
----
+## Getting Started
 
-## ⚙️ Installation
+### Prerequisites
+- Node.js 18+ (recommended)
+- npm 9+
 
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/your-username/product-inventory-api.git
-   cd product-inventory-api
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Create a `.env` file** in the project root and add the following:
-
-   ```env
-   PORT=5000
-   ```
-
-4. **Start the server**
-
-   ```bash
-   npm start
-   ```
-
-   Or if you’re using **nodemon** for auto-restart during development:
-
-   ```bash
-   npm run dev
-   ```
-
----
-
-## 🧩 API Endpoints
-
-### **Root Route**
-
-**GET** `/`  
-Returns a simple message to confirm the API is running.
-
-**Response:**
-```json
-"Product Inventory API is running"
+### 1) Install dependencies
+```bash
+npm install
 ```
 
----
+### 2) Configure environment
+Create a `.env` file in the project root with a port value:
+```env
+PORT=3000
+```
 
-### **Get All Products**
+> Important: `server.js` reads `process.env.PORT`. If `PORT` is missing, the server may fail to start or listen on an undefined port.
 
-**GET** `/products`
+### 3) Run the server
+- Production/start mode:
+```bash
+npm start
+```
+- Dev mode with auto-reload (nodemon):
+```bash
+npx nodemon server.js
+```
 
-**Success Response (200):**
+> Note: The existing `dev` script in `package.json` points to `serverapp.js`, which does not exist. You can fix it like so:
+> ```json
+> {
+>   "scripts": {
+>     "dev": "nodemon server.js"
+>   }
+> }
+> ```
+
+The server will start on `http://localhost:<PORT>` (e.g., `http://localhost:3000`).
+
+## API Endpoints
+
+### GET `/`
+Health check for the API.
+- Response: `text/plain`
+```
+Product Inventory API is running
+```
+
+### GET `/products`
+Returns all products from `data/products.js`.
+- Success `200`:
 ```json
 {
   "message": "Products retrieved successfully",
   "data": [
-    {
-      "id": 1,
-      "name": "Product A",
-      "price": 100
-    }
+    { "id": 1, "name": "Samsung S22 Ultra", "price": 600, "InStock": 10 },
+    { "id": 2, "name": "Samsung Galaxy A54", "price": 400, "InStock": 15 }
   ]
 }
 ```
-
-**Error Response (404):**
+- Not Found `404` (when no products exist):
 ```json
 {
   "message": "No products found",
@@ -106,39 +93,118 @@ Returns a simple message to confirm the API is running.
 }
 ```
 
----
-
-## 🧠 Example `data/products.js`
-
-```js
-module.exports = [
-  { id: 1, name: 'Laptop', price: 1200 },
-  { id: 2, name: 'Phone', price: 800 },
-  { id: 3, name: 'Headphones', price: 150 }
-];
+### GET `/products/:id`
+Returns a single product by id.
+- Success `200`:
+```json
+{
+  "message": "Product retrieved successfully",
+  "data": { "id": 1, "name": "Samsung S22 Ultra", "price": 600, "InStock": 10 }
+}
+```
+- Not Found `404`:
+```json
+{ "message": "Product not found", "data": null }
 ```
 
----
+### POST `/products`
+Create a new product. Expects JSON body: `{ name: string, price: number, InStock: number }`.
+- Created `201`:
+```json
+{
+  "message": "Product created successfully",
+  "data": { "id": 16, "name": "New Phone", "price": 499, "InStock": 7 }
+}
+```
+- Bad Request `400` (invalid payload):
+```json
+{ "message": "Invalid payload. Expected { name: string, price: number, InStock: number }", "data": null }
+```
 
-## 🧰 Technologies Used
+### PUT `/products/:id`
+Replace an existing product. Requires full object: `{ name, price, InStock }`.
+- Success `200`:
+```json
+{
+  "message": "Product replaced successfully",
+  "data": { "id": 1, "name": "Updated Name", "price": 640, "InStock": 12 }
+}
+```
+- Not Found `404` or Bad Request `400` (invalid payload).
 
-- [Node.js](https://nodejs.org/)
-- [Express.js](https://expressjs.com/)
-- [dotenv](https://www.npmjs.com/package/dotenv)
+### PATCH `/products/:id`
+Partially update an existing product. Allowed fields: `name`, `price`, `InStock`.
+- Success `200`:
+```json
+{
+  "message": "Product updated successfully",
+  "data": { "id": 1, "name": "Samsung S22 Ultra", "price": 620, "InStock": 8 }
+}
+```
+- Not Found `404` or Bad Request `400` (invalid field/types or empty body):
+```json
+{ "message": "Product not found", "data": null }
+```
 
----
+### DELETE `/products/:id`
+Delete a product by id.
+- Success `200` (returns deleted entity):
+```json
+{
+  "message": "Product deleted successfully",
+  "data": { "id": 1, "name": "Samsung S22 Ultra", "price": 600, "InStock": 10 }
+}
+```
+- Not Found `404`:
+```json
+{ "message": "Product not found", "data": null }
+```
 
-## 💡 Future Improvements
+### Sample curl
+```bash
+curl http://localhost:3000/
+curl http://localhost:3000/products
+curl http://localhost:3000/products/1
 
-- Add POST, PUT, DELETE routes for CRUD functionality  
-- Connect to a real database (e.g., MongoDB or PostgreSQL)  
-- Add authentication and validation  
-- Deploy to a cloud platform (e.g., Render, Railway, or Vercel)
+# create
+curl -X POST http://localhost:3000/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"New Phone","price":499,"InStock":7}'
 
----
+# put (replace)
+curl -X PUT http://localhost:3000/products/1 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Updated Name","price":640,"InStock":12}'
 
-## 👨‍💻 Author
+# patch
+curl -X PATCH http://localhost:3000/products/1 \
+  -H "Content-Type: application/json" \
+  -d '{"price":620,"InStock":8}'
 
-**Who Knows Aluminum Ventures**  
-📍 Kasoa Ayigbe Town  
-📞 0554042322  
+# delete
+curl -X DELETE http://localhost:3000/products/1
+```
+
+## Data Model
+Each product in `data/products.js` has the shape:
+```json
+{
+  "id": number,
+  "name": string,
+  "price": number,
+  "InStock": number
+}
+```
+
+## Scripts
+- `npm start` — runs `node server.js`
+- `npm run dev` — recommended to update to `nodemon server.js`
+
+## License
+ISC
+
+## Notes / Future Improvements
+- Add pagination, filtering, and sorting for `/products`
+- Persist data via a database (SQLite/PostgreSQL/MongoDB)
+- Input validation and error handling
+- Tests (unit/integration) and CI
